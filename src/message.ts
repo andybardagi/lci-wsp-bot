@@ -7,7 +7,7 @@ export const sendMessage = async (client: Client, data: SendMessageConfig) => {
     // TODO: Validate destination
     await client.sendMessage(destination, message);
   } catch (error) {
-    console.error(error);
+    //console.error(error);
     return {
       success: false,
       message: "Error enviando el mensaje",

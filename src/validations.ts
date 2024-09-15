@@ -6,9 +6,14 @@
  * // returns ["nombre_completo", "mail"]
  * getRequiredVariables("Hola {{nombre_completo}}. Tu cuenta con mail {{mail}} fue creada con éxito")
  */
-
 export const getRequiredVariables = (message: string): string[] => {
-  throw new Error("Not implemented");
+  const requiredVariables = message.match(/{{(.*?)}}/g);
+
+  if (!requiredVariables) {
+    return [];
+  }
+
+  return requiredVariables.map((v) => v.replace("{{", "").replace("}}", ""));
 };
 
 /**
@@ -29,6 +34,26 @@ export const validateVariables = (data: {
   success: boolean;
   missingVariables: string[];
 } => {
-    // TODO: Asegurar que también esté la columna del teléfono.
-  throw new Error("Not implemented");
+  // TODO: Asegurar que también esté la columna del teléfono.
+
+  const { requiredVariables, availableVariables } = data;
+
+  const missingVariables = requiredVariables.filter(
+    (requiredVariable) =>
+      !availableVariables.some((availableVariable) =>
+        validateStringEquals(requiredVariable, availableVariable)
+      )
+  );
+
+  return {
+    success: missingVariables.length === 0,
+    missingVariables,
+  };
+};
+
+export const validateStringEquals = (
+  string1: string,
+  string2: string
+): boolean => {
+  return String(string1).toLowerCase() === String(string2).toLowerCase();
 };

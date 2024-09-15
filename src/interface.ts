@@ -5,7 +5,12 @@ import { ExcelMessageOption } from "./types/Excel";
  * @param sheets Lista de hojas de la planilla de excel que el usuario puede seleccionar
  */
 export const selectSheetPrompt = (sheets: string[]): string => {
-  throw new Error("Not implemented");
+  console.log("Seleccione una hoja de la planilla de Excel:");
+  sheets.forEach((sheet, index) => {
+    console.log(`${index + 1}. ${sheet}`);
+  });
+
+  throw new Error("Not implemented"); // TODO: Implementar selección
 };
 
 /**

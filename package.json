@@ -5,12 +5,13 @@
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
+    "build": "tsc && cp LCI.xlsx ./dist/src",
     "build-executable": "pkg . --out-path ./build"
   },
   "author": "Andres Bardagi Inchaurrondo (andresbardagi2002@gmail.com)",
   "license": "ISC",
   "dependencies": {
+    "node-xlsx": "^0.24.0",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.25.0"
   },

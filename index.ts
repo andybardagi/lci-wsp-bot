@@ -1,3 +1,4 @@
+import { Client } from "whatsapp-web.js";
 import {
   extractColumnsFromSheet,
   getAvailableMessages,
@@ -10,13 +11,14 @@ import { ExtractedRowResult } from "./src/types/Excel";
 import { getRequiredVariables, validateVariables } from "./src/validations";
 import { getWspClient } from "./src/wsp-client";
 
-const FILENAME = "Plantilla de Excel.xlsx";
+const FILENAME = "LCI.xlsx";
 const MESSAGES_SHEET = "Mensajes";
 const ACCOUNTS_SHEET = "Cuentas";
 const EXCLUDED_SHEETS = [MESSAGES_SHEET, ACCOUNTS_SHEET];
 
-export const main = async () => {
-  const wspClient = await getWspClient();
+const main = async () => {
+  //const wspClient = await getWspClient();
+  const wspClient = {} as Client;
 
   /**
    * Flujo:
@@ -30,19 +32,32 @@ export const main = async () => {
 
   let opc = -1;
   while (opc !== 0) {
-    const availableSheets = await getAvailableSheets(FILENAME, EXCLUDED_SHEETS);
-    const selectedSheet = selectSheetPrompt(availableSheets);
-    const columns = await extractColumnsFromSheet({
+    const availableSheets = getAvailableSheets(FILENAME, EXCLUDED_SHEETS);
+
+    // TODO: remove this
+    //const selectedSheet = selectSheetPrompt(availableSheets);
+    const selectedSheet = availableSheets[0];
+    console.log("Hoja seleccionada: ", selectedSheet);
+
+    const columns = extractColumnsFromSheet({
       sheet: selectedSheet,
       filename: FILENAME,
     });
 
-    const availableMessages = await getAvailableMessages({
+    console.log(`Columnas seleccionadas: [ ${columns.join(", ")} ]`);
+
+    const availableMessages = getAvailableMessages({
       sheet: MESSAGES_SHEET,
       filename: FILENAME,
     });
 
-    const selectedMessage = selectMessagePrompt(availableMessages);
+    console.log(
+      `Mensajes disponibles: ${JSON.stringify(availableMessages, null, 2)}`
+    );
+
+    // const selectedMessage = selectMessagePrompt(availableMessages);
+    // TODO: remove this
+    const selectedMessage = availableMessages[0];
 
     const requiredVariables = getRequiredVariables(selectedMessage.message);
 
@@ -57,10 +72,14 @@ export const main = async () => {
       continue;
     }
 
-    const data = await getDataFromSheet({
+    const data = getDataFromSheet({
       sheet: selectedSheet,
       filename: FILENAME,
     });
+
+    console.log(
+      `Datos de la hoja seleccionada: ${JSON.stringify(data, null, 2)}`
+    );
 
     // TODO: Enviar mensaje a cada fila de la hoja seleccionada
 
@@ -82,7 +101,7 @@ export const main = async () => {
           rowIdx: row.rowIdx,
         });
       } catch (error) {
-        console.error(error);
+        //console.error(error);
         results.push({
           ...row,
           success: false,
@@ -94,3 +113,7 @@ export const main = async () => {
     // TODO: Actualizar columna generada con el estado del mensaje enviado ✅/❌
   }
 };
+
+main().then(() => {
+  console.log("Terminé la ejecución");
+});
