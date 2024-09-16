@@ -8,10 +8,7 @@ export const sendMessage = async (client: Client, data: SendMessageConfig) => {
     await new Promise((resolve) => setTimeout(resolve, delay));
 
     const { message, destination } = data;
-    return {
-      success: true,
-      message: "Mensaje enviado correctamente",
-    };
+    
     // TODO: Validate destination
     await client.sendMessage(destination, message);
   } catch (error) {
@@ -21,3 +18,13 @@ export const sendMessage = async (client: Client, data: SendMessageConfig) => {
     };
   }
 };
+export const replaceMessageVariables = (
+  message: string,
+  variables: Record<string, unknown>
+): string => {
+  let newMessage = message;
+  Object.entries(variables).forEach(([key, value]) => {
+    newMessage = newMessage.replaceAll(`{{${key}}}`, String(value));
+  });
+  return newMessage;
+}

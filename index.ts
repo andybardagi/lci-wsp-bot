@@ -6,10 +6,11 @@ import {
   getDataFromSheet,
 } from "./src/excel";
 import { selectMessagePrompt, selectSheetPrompt } from "./src/interface";
-import { sendMessage } from "./src/message";
+import { replaceMessageVariables, sendMessage } from "./src/message";
 import { ExtractedRowResult } from "./src/types/Excel";
 import { getRequiredVariables, validateVariables } from "./src/validations";
 import { getWspClient } from "./src/wsp-client";
+import {confirm} from "@inquirer/prompts";
 
 const FILENAME = "LCI.xlsx";
 const MESSAGES_SHEET = "Mensajes";
@@ -17,9 +18,7 @@ const ACCOUNTS_SHEET = "Cuentas";
 const EXCLUDED_SHEETS = [MESSAGES_SHEET, ACCOUNTS_SHEET];
 
 const main = async () => {
-  //const wspClient = await getWspClient();
-  const wspClient = {} as Client;
-
+  const wspClient = await getWspClient();
   /**
    * Flujo:
    * 1 - Seleccionar hoja de planilla de excel (no se puede seleccionar "Mensajes" ni "Cuentas")
@@ -72,7 +71,7 @@ const main = async () => {
     const data = getDataFromSheet({
       sheet: selectedSheet,
       filename: FILENAME,
-    });
+    }).filter(row => row.data["telefono"]);
 
     console.log("-> Extrayendo datos de la hoja seleccionada...");
     console.log(`-> DATOS DE LA HOJA: ${data.length} registros`);
@@ -85,9 +84,10 @@ const main = async () => {
       try {
         // TODO: Reemplazar variables en el mensaje
         const message = selectedMessage.message;
-        const destination = "";
+        const newMessage = replaceMessageVariables(message, row.data);
+        const destination = String(row.data["telefono"]).trim()+"@c.us";
         await sendMessage(wspClient, {
-          message,
+          message: newMessage,
           destination,
         });
 
@@ -105,9 +105,16 @@ const main = async () => {
         });
       }
     }
+    console.log("-> Envío de mensajes finalizado\n");
+    const confirmation = await confirm({
+      message: "¿Desea enviar más mensajes?",
+    });
+    if(!confirmation) opc = 0;
 
     // TODO: Actualizar columna generada con el estado del mensaje enviado ✅/❌
   }
+
+  
 };
 
 main().then(() => {

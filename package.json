@@ -3,10 +3,16 @@
   "version": "1.0.0",
   "description": "A whatsapp bot made by Andy Bardagí for Lema Colina Institute Team.",
   "main": "index.ts",
+  "bin": "./dist/index.js",
+  "pkg": {
+    "targets": [
+      "node16-win-x64"
+    ]
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc && cp LCI.xlsx ./dist/src",
-    "build-executable": "pkg . --out-path ./build"
+    "build-executable": "npx pkg . --out-path ./build"
   },
   "author": "Andres Bardagi Inchaurrondo (andresbardagi2002@gmail.com)",
   "license": "ISC",

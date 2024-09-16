@@ -36,9 +36,10 @@ export const validateVariables = (data: {
 } => {
   const availableVariables = data.availableVariables.map(v => cleanString(v));
   const requiredVariables = data.requiredVariables.map(v => cleanString(v));
+  console.log(availableVariables);
 
   const hasColumPhone = availableVariables.some((v) => v === "telefono");
-  if (hasColumPhone) {
+  if (!hasColumPhone) {
     return {
       success: false,
       missingVariables: ["telefono"],

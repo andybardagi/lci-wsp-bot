@@ -9,7 +9,7 @@ export type GetDataFromSheetConfig = {
 };
 
 export type ExtractedRow = {
-  data: Record<string, unknown>[];
+  data: Record<string, unknown>;
   rowIdx: number;
 };
 
