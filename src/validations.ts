@@ -34,9 +34,16 @@ export const validateVariables = (data: {
   success: boolean;
   missingVariables: string[];
 } => {
-  // TODO: Asegurar que también esté la columna del teléfono.
+  const availableVariables = data.availableVariables.map(v => cleanString(v));
+  const requiredVariables = data.requiredVariables.map(v => cleanString(v));
 
-  const { requiredVariables, availableVariables } = data;
+  const hasColumPhone = availableVariables.some((v) => v === "telefono");
+  if (hasColumPhone) {
+    return {
+      success: false,
+      missingVariables: ["telefono"],
+    };
+  }
 
   const missingVariables = requiredVariables.filter(
     (requiredVariable) =>
@@ -56,4 +63,17 @@ export const validateStringEquals = (
   string2: string
 ): boolean => {
   return String(string1).toLowerCase() === String(string2).toLowerCase();
+};
+
+export const cleanString = (string: unknown): string => {
+  return String(string)
+    .trim()
+    .toLowerCase()
+    .replaceAll("á", "a")
+    .replaceAll("é", "e")
+    .replaceAll("í", "i")
+    .replaceAll("ó", "o")
+    .replaceAll("ú", "u")
+    .replaceAll("ñ", "n")
+    .replaceAll(" ", "_");
 };

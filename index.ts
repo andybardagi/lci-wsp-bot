@@ -34,30 +34,23 @@ const main = async () => {
   while (opc !== 0) {
     const availableSheets = getAvailableSheets(FILENAME, EXCLUDED_SHEETS);
 
-    // TODO: remove this
-    //const selectedSheet = selectSheetPrompt(availableSheets);
-    const selectedSheet = availableSheets[0];
-    console.log("Hoja seleccionada: ", selectedSheet);
+    const selectedSheet = await selectSheetPrompt(availableSheets);
+    console.log("-> HOJA SELECCIONADA: ", selectedSheet);
 
     const columns = extractColumnsFromSheet({
       sheet: selectedSheet,
       filename: FILENAME,
     });
 
-    console.log(`Columnas seleccionadas: [ ${columns.join(", ")} ]`);
+    const columnsList = columns.map((column) => `\t- ${column}`).join("\n");
+    console.log(`-> DATOS DISPONIBLES: \n${columnsList}`);
 
     const availableMessages = getAvailableMessages({
       sheet: MESSAGES_SHEET,
       filename: FILENAME,
     });
 
-    console.log(
-      `Mensajes disponibles: ${JSON.stringify(availableMessages, null, 2)}`
-    );
-
-    // const selectedMessage = selectMessagePrompt(availableMessages);
-    // TODO: remove this
-    const selectedMessage = availableMessages[0];
+    const selectedMessage = await selectMessagePrompt(availableMessages);
 
     const requiredVariables = getRequiredVariables(selectedMessage.message);
 
@@ -67,8 +60,12 @@ const main = async () => {
     });
 
     if (!validationResult.success) {
-      // TODO: Mensaje de error
-      console.log(validationResult.missingVariables);
+      console.log(
+        "-> ERROR: El mensaje elegido requiere de las siguientes variables que no están disponibles en la hoja seleccionada:"
+      );
+      console.log(
+        validationResult.missingVariables.map((v) => `- ${v}`).join("\n")
+      );
       continue;
     }
 
@@ -77,15 +74,14 @@ const main = async () => {
       filename: FILENAME,
     });
 
-    console.log(
-      `Datos de la hoja seleccionada: ${JSON.stringify(data, null, 2)}`
-    );
-
-    // TODO: Enviar mensaje a cada fila de la hoja seleccionada
+    console.log("-> Extrayendo datos de la hoja seleccionada...");
+    console.log(`-> DATOS DE LA HOJA: ${data.length} registros`);
+    console.log("-> Iniciando envío de mensajes... (Recuerde que entre mensajes se puede agrega una demora intencional 2-4 segundos)");
 
     const results: ExtractedRowResult[] = [];
 
-    data.forEach(async (row) => {
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
       try {
         // TODO: Reemplazar variables en el mensaje
         const message = selectedMessage.message;
@@ -100,20 +96,20 @@ const main = async () => {
           success: true,
           rowIdx: row.rowIdx,
         });
+        console.log(`${row.rowIdx}. mensaje enviado correctamente`);
       } catch (error) {
-        //console.error(error);
         results.push({
           ...row,
           success: false,
           rowIdx: row.rowIdx,
         });
       }
-    });
+    }
 
     // TODO: Actualizar columna generada con el estado del mensaje enviado ✅/❌
   }
 };
 
 main().then(() => {
-  console.log("Terminé la ejecución");
+  console.log("Muchas gracias por usar el bot de Whatsapp de LCI!");
 });

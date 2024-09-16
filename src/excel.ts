@@ -4,7 +4,7 @@ import {
   GetDataFromSheetConfig,
 } from "./types/Excel";
 import xlsx from "node-xlsx";
-import { validateStringEquals } from "./validations";
+import { cleanString, validateStringEquals } from "./validations";
 
 /**
  * Función que devuelve una lista de hojas de la planilla de excel con el nombre de la hoja
@@ -94,7 +94,16 @@ export const getDataFromSheet = (
         data: row
           .filter((column) => Boolean(column))
           .reduce((acc, curr, i) => {
-            acc[headers[i]] = String(curr);
+            const headerKey = cleanString(headers[i]);
+            const value = String(curr);
+            const hasKey = acc[headerKey] != null;
+            // Valdar que dos columnas no se puedan tener el mismo nombre
+            if (hasKey) {
+              throw new Error(
+                `La columna ${headerKey} está presente dos veces.`
+              );
+            }
+            acc[headerKey] = value;
             return acc;
           }, {} as Record<string, unknown>),
         rowIdx: index,
