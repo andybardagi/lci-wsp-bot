@@ -8,7 +8,7 @@ export const sendMessage = async (client: Client, data: SendMessageConfig) => {
     await new Promise((resolve) => setTimeout(resolve, delay));
 
     const { message, destination } = data;
-    
+
     // TODO: Validate destination
     await client.sendMessage(destination, message);
   } catch (error) {
@@ -23,8 +23,16 @@ export const replaceMessageVariables = (
   variables: Record<string, unknown>
 ): string => {
   let newMessage = message;
-  Object.entries(variables).forEach(([key, value]) => {
-    newMessage = newMessage.replaceAll(`{{${key}}}`, String(value));
+  // Normalizamos las claves del objeto variables
+  const normalizedVariables = Object.fromEntries(
+    Object.entries(variables).map(([key, value]) => [key.toLowerCase(), value])
+  );
+
+  // Reemplazamos las variables en el mensaje
+  Object.entries(normalizedVariables).forEach(([key, value]) => {
+    const regex = new RegExp(`{{${key}}}`, "gi"); // 'gi' para que sea insensible a mayúsculas/minúsculas
+    newMessage = newMessage.replace(regex, String(value));
   });
+
   return newMessage;
-}
+};
