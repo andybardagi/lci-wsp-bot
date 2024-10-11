@@ -10,7 +10,7 @@ import { replaceMessageVariables, sendMessage } from "./src/message";
 import { ExtractedRowResult } from "./src/types/Excel";
 import { getRequiredVariables, validateVariables } from "./src/validations";
 import { getWspClient } from "./src/wsp-client";
-import {confirm} from "@inquirer/prompts";
+import { confirm } from "@inquirer/prompts";
 
 const FILENAME = "LCI.xlsx";
 const MESSAGES_SHEET = "Mensajes";
@@ -19,20 +19,10 @@ const EXCLUDED_SHEETS = [MESSAGES_SHEET, ACCOUNTS_SHEET];
 
 const main = async () => {
   const wspClient = await getWspClient();
-  /**
-   * Flujo:
-   * 1 - Seleccionar hoja de planilla de excel (no se puede seleccionar "Mensajes" ni "Cuentas")
-   * 2 - Seleccionar el mensaje desde la hoja de planilla llamada "Mensajes"
-   * 3 - Validar que el mensaje tenga solo disponibles variables de la planilla seleccionada
-   * 4 - Crear una nueva columna en la hoja de planilla seleccionada llamada "WSP - {fecha} - enviado"
-   * 5 - Recorrer cada fila de la hoja seleccionada y enviar un mensaje a cada uno reemplazando las variables de la hoja de planilla
-   * 6 - Actualizar la columna generada con el estado del mensaje enviado ✅/❌
-   */
-
   let opc = -1;
+
   while (opc !== 0) {
     const availableSheets = getAvailableSheets(FILENAME, EXCLUDED_SHEETS);
-
     const selectedSheet = await selectSheetPrompt(availableSheets);
     console.log("-> HOJA SELECCIONADA: ", selectedSheet);
 
@@ -44,14 +34,25 @@ const main = async () => {
     const columnsList = columns.map((column) => `\t- ${column}`).join("\n");
     console.log(`-> DATOS DISPONIBLES: \n${columnsList}`);
 
-    const availableMessages = getAvailableMessages({
+    // Filtrar "mensaje 03" de la lista que verá el usuario
+    const availableMessagesForUser = getAvailableMessages({
       sheet: MESSAGES_SHEET,
       filename: FILENAME,
-    });
+    }).filter(msg => msg.title !== 'mensaje 03');  // Ocultamos "mensaje 03"
 
-    const selectedMessage = await selectMessagePrompt(availableMessages);
+    // Pero mantenemos "mensaje 03" internamente para poder usarlo
+    const mensaje03 = getAvailableMessages({
+      sheet: MESSAGES_SHEET,
+      filename: FILENAME,
+    }).find(msg => msg.title === 'mensaje 03');
 
-    const requiredVariables = getRequiredVariables(selectedMessage.message);
+    const originalMessage = await selectMessagePrompt(availableMessagesForUser);
+    console.log("-> MENSAJE SELECCIONADO: ", originalMessage.title);
+
+    // Verificamos si el mensaje seleccionado es "mensaje 01"
+    const isMessage01 = originalMessage.title === "mensaje 01";
+
+    const requiredVariables = getRequiredVariables(originalMessage.message);
 
     const validationResult = validateVariables({
       requiredVariables,
@@ -71,21 +72,30 @@ const main = async () => {
     const data = getDataFromSheet({
       sheet: selectedSheet,
       filename: FILENAME,
-    }).filter(row => row.data["telefono"]);
+    }).filter(row => row.data["telefono"] && row.data["bl_cuenta"]);
 
     console.log("-> Extrayendo datos de la hoja seleccionada...");
     console.log(`-> DATOS DE LA HOJA: ${data.length} registros`);
-    console.log("-> Iniciando envío de mensajes... (Recuerde que entre mensajes se puede agrega una demora intencional 2-4 segundos)");
+    console.log("-> Iniciando envío de mensajes... (Recuerde que entre mensajes se puede agregar una demora intencional 2-4 segundos)");
 
     const results: ExtractedRowResult[] = [];
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       try {
-        // TODO: Reemplazar variables en el mensaje
+        const blCuenta = row.data["bl_cuenta"];
+        let selectedMessage = originalMessage;  // Restauramos el mensaje original al inicio de cada iteración
+
+        // Si el mensaje es "mensaje 01" y bl_cuenta es "SI", seleccionamos "mensaje 03"
+        if (isMessage01 && blCuenta === 'SI' && mensaje03) {
+          selectedMessage = mensaje03;
+        }
+
+        // Reemplazar variables en el mensaje
         const message = selectedMessage.message;
-        const newMessage = replaceMessageVariables(message, row.data);
-        const destination = String(row.data["telefono"]).trim()+"@c.us";
+        const newMessage = replaceMessageVariables(message, row.data, isMessage01);
+        const destination = String(row.data["telefono"]).trim() + "@c.us";
+
         await sendMessage(wspClient, {
           message: newMessage,
           destination,
@@ -105,18 +115,18 @@ const main = async () => {
         });
       }
     }
+
     console.log("-> Envío de mensajes finalizado\n");
     const confirmation = await confirm({
       message: "¿Desea enviar más mensajes?",
     });
-    if(!confirmation) opc = 0;
-
-    // TODO: Actualizar columna generada con el estado del mensaje enviado ✅/❌
+    if (!confirmation) opc = 0;
   }
 
-  
 };
 
 main().then(() => {
   console.log("Muchas gracias por usar el bot de Whatsapp de LCI!");
 });
+
+

@@ -42,11 +42,13 @@ export const selectMessagePrompt = async (
         name: `${index + 1}. ${message.title}`,
         value: message,
       })),
+
     });
 
     if (!selection) {
       console.log("Selección inválida. Por favor, inténtelo de nuevo.");
     }
+   
   }
 
   return selection;

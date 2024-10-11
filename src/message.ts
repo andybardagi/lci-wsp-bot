@@ -20,13 +20,16 @@ export const sendMessage = async (client: Client, data: SendMessageConfig) => {
 };
 export const replaceMessageVariables = (
   message: string,
-  variables: Record<string, unknown>
+  variables: Record<string, unknown>,
+  isMessage01: boolean,
 ): string => {
   let newMessage = message;
+
   // Normalizamos las claves del objeto variables
   const normalizedVariables = Object.fromEntries(
     Object.entries(variables).map(([key, value]) => [key.toLowerCase(), value])
   );
+ 
 
   // Reemplazamos las variables en el mensaje
   Object.entries(normalizedVariables).forEach(([key, value]) => {
